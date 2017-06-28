@@ -2,7 +2,7 @@ xontrib load schedule
 import types
 import pepper
 
-__all__ = ('salt')
+__all__ = 'salt',
 __version__ = '0.0.1'
 
 
