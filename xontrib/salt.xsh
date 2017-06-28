@@ -1,6 +1,7 @@
 xontrib load schedule
 import types
 import pepper
+import pepper.cli
 
 __all__ = 'salt',
 __version__ = '0.0.1'
@@ -11,7 +12,6 @@ salt_client = None
 
 def _salt_login():
     global salt_client
-    import pepper.cli
     # We do this to be able to parse .pepperrc
     pc = pepper.cli.PepperCli()
     pc.parse()
@@ -20,6 +20,8 @@ def _salt_login():
         debug_http=pc.options.debug_http,
         ignore_ssl_errors=pc.options.ignore_ssl_certificate_errors
     )
+
+    # Ok, on to the actual stuff
     auth = salt_client.login(*pc.parse_login())
     schedule.when(auth['expire']).do(_salt_login)
 
@@ -30,7 +32,7 @@ class SaltCommand(types.SimpleNamespace):
 
     def __getattr__(self, name):
         if self.command:
-            return SaltCommand(target=self.target, command=self.command+'.'+name)
+            return SaltCommand(target=self.target, command=self.command + '.' + name)
         else:
             return SaltCommand(target=self.target, command=name)
 

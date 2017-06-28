@@ -14,13 +14,13 @@ Installation / Usage
 
 To install use pip:
 
-    $ pip install xontrib-salt
+    $ xip install xontrib-salt
 
 
 Or clone the repo:
 
     $ git clone https://github.com/astronouth7303/xontrib-salt.git
-    $ pip install ./xontrib-salt
+    $ xip install ./xontrib-salt
 
 Contributing
 ------------
