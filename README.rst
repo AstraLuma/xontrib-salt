@@ -1,16 +1,13 @@
 xontrib-salt
 ===============================
 
-version number: 0.0.1
-author: Jamie Bliss
-
 Overview
 --------
 
 SaltStack, accessible from xonsh
 
-Makes use of Salt's HTTP RPC via Pepper, so make sure you've configured a `netapi module`_.
-Credentials come from your .pepperrc_ file.
+Makes use of Salt's HTTP RPC via Pepper, so make sure you've configured netapi_
+and eauth_ modules. Credentials come from your .pepperrc_ file.
 
 Installation / Usage
 --------------------
@@ -33,7 +30,12 @@ Fork, submit a pull request, and we'll have a discussion. Keep to PEP8.
 Example
 -------
 
+Runner commands:
+
    $ salt.saltuitl.sync_all()
+
+
+Standard minion commands:
 
    $ salt['*'].test.ping()
 
@@ -43,7 +45,8 @@ Credits
 This package was created with cookiecutter_ and the xontrib_ template.
 
 
-.. _`netapi module`: https://docs.saltstack.com/en/develop/ref/netapi/all/index.html
+.. _netapi: https://docs.saltstack.com/en/develop/ref/netapi/all/index.html
+.. _eauth: https://docs.saltstack.com/en/latest/topics/eauth/index.html
 .. _.pepperrc: https://github.com/saltstack/pepper/blob/develop/README.rst#configuration
 .. _cookiecutter: https://github.com/audreyr/cookiecutter
 .. _xontrib: https://github.com/laerus/cookiecutter-xontrib
