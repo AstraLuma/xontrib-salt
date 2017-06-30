@@ -22,8 +22,13 @@ def _salt_login():
     )
 
     # Ok, on to the actual stuff
-    auth = salt_client.login(*pc.parse_login())
-    schedule.when(auth['expire']).do(_salt_login)
+    try:
+        auth = salt_client.login(*pc.parse_login())
+    except Exception:
+        # Try again in 5s, probably lack of network after waking up
+        schedule.delay(5).do(_salt_login)
+    else:
+        schedule.when(auth['expire']).do(_salt_login)
 
 
 class SaltCommand(types.SimpleNamespace):
