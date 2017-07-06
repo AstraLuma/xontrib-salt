@@ -9,8 +9,12 @@ __version__ = '0.0.1'
 
 salt_client = None
 
+exec_modules = None
+runner_modules = None
+wheel_modules = None
 
-def _salt_login():
+
+def login():
     global salt_client
     # We do this to be able to parse .pepperrc
     pc = pepper.cli.PepperCli()
@@ -26,40 +30,111 @@ def _salt_login():
         auth = salt_client.login(*pc.parse_login())
     except Exception:
         # Try again in 5s, probably lack of network after waking up
-        schedule.delay(5).do(_salt_login)
+        schedule.delay(5).do(login)
     else:
-        schedule.when(auth['expire']).do(_salt_login)
+        schedule.when(auth['expire']).do(login)
+        _update_modules()
 
 
-class SaltCommand(types.SimpleNamespace):
-    command = None
-    target = None
+def _parse_docs(info):
+    rv = {}
+    for dotted, docstring in info.items():
+        assert '.' in dotted, (dotted, docstring)
+        mod, func = dotted.split('.', 1)
+        rv.setdefault(mod, {})[func] = docstring
+    return rv
+
+
+def _update_modules():
+    global exec_modules, runner_modules, wheel_modules
+    if exec_modules is None:
+        print("Loading salt information...")
+    # FIXME: Cache this information in the filesystem
+    exec_modules = _parse_docs(salt_client.runner('doc.execution')['return'][0])
+    runner_modules = _parse_docs(salt_client.runner('doc.runner')['return'][0])
+    wheel_modules = _parse_docs(salt_client.runner('doc.wheel')['return'][0])
+
+
+class Module(types.SimpleNamespace):
+    _funcs = None
+    _name = None
+    _client = None
 
     def __getattr__(self, name):
-        if self.command:
-            return SaltCommand(target=self.target, command=self.command + '.' + name)
-        else:
-            return SaltCommand(target=self.target, command=name)
+        try:
+            docstring = self._funcs[name]
+        except KeyError:
+            raise AttributeError
 
-    def __call__(self, *pargs, **kwargs):
-        if self.target:
-            rv = salt_client.local(self.target, self.command, pargs, kwargs, expr_form='compound')
-        else:
-            rv = salt_client.runner(self.command, pargs, **kwargs)
+        def _call(*pargs, **kwargs):
+            rv = self._rpc(self._name + '.' + name, *pargs, **kwargs)
+            if 'return' in rv:
+                rv = rv['return'][0]
+            return rv
 
-        if 'return' in rv:
-            rv = rv['return'][0]
+        _call.__name__ = name
+        _call.__qualname__ = 'salt.{}.{}'.format(self._name, name)
+        _call.__doc__ = docstring
 
+        return _call
+
+    def __dir__(self):
+        rv = super().__dir__()
+        rv += list(self._funcs.keys())
         return rv
 
 
-class SaltClient:
-    def __getitem__(self, key):
-        return SaltCommand(target=key)
+class ExecModule(Module):
+    _target = None
+
+    def _rpc(self, name, *pargs, **kwargs):
+        return self._client.local(self._target, name, pargs, kwargs, expr_form='compound')
+
+
+class RunnerModule(Module):
+    def _rpc(self, name, *pargs, **kwargs):
+        return self._client.runner(name, pargs, **kwargs)
+
+
+class WheelModule(Module):
+    def _rpc(self, name, *pargs, **kwargs):
+        return self._client.wheel(name, pargs, kwargs)
+
+
+class MinionQuery(types.SimpleNamespace):
+    _target = None
+    _client = None
 
     def __getattr__(self, name):
-        return SaltCommand(command=name)
+        try:
+            funcs = exec_modules[name]
+        except KeyError:
+            raise AttributeError
+        return ExecModule(_target=self._target, _client=self._client, _name=name, _funcs=funcs)
+
+    def __dir__(self):
+        rv = super().__dir__()
+        rv += list(exec_modules.keys())
+        return rv
 
 
-_salt_login()
-salt = SaltClient()
+class Client:
+    def __getitem__(self, key):
+        return MinionQuery(_target=key, _client=salt_client)
+
+    def __getattr__(self, name):
+        if name in runner_modules:
+            return RunnerModule(_client=salt_client, _name=name, _funcs=runner_modules[name])
+        elif name in wheel_modules:
+            return RunnerModule(_client=salt_client, _name=name, _funcs=wheel_modules[name])
+        else:
+            raise AttributeError
+
+    def __dir__(self):
+        rv = super().__dir__()
+        rv += list(set(runner_modules.keys()) | set(wheel_modules))
+        return rv
+
+
+login()
+salt = Client()
