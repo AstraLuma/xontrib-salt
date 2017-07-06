@@ -67,13 +67,10 @@ class Module(types.SimpleNamespace):
             raise AttributeError
 
         def _call(*pargs, **kwargs):
-            rv = self._rpc(self._name + '.' + name, *pargs, **kwargs)
-            if 'return' in rv:
-                rv = rv['return'][0]
-            return rv
+            return self._rpc(self._name + '.' + name, *pargs, **kwargs)
 
         _call.__name__ = name
-        _call.__qualname__ = 'salt.{}.{}'.format(self._name, name)
+        _call.__qualname__ = 'Client.<{}.{}>'.format(self._name, name)
         _call.__doc__ = docstring
 
         return _call
@@ -83,22 +80,31 @@ class Module(types.SimpleNamespace):
         rv += list(self._funcs.keys())
         return rv
 
+    def __repr__(self):
+        attrs = vars(self).copy()
+        del attrs['_funcs']
+        return "{}({})".format(
+            type(self).__name__,
+            ', '.join("{}={!r}".format(k, v) for k, v in attrs.items())
+            )
+
+
 
 class ExecModule(Module):
     _target = None
 
     def _rpc(self, name, *pargs, **kwargs):
-        return self._client.local(self._target, name, pargs, kwargs, expr_form='compound')
+        return self._client.local(self._target, name, pargs, kwargs, expr_form='compound')['return'][0]
 
 
 class RunnerModule(Module):
     def _rpc(self, name, *pargs, **kwargs):
-        return self._client.runner(name, pargs, **kwargs)
+        return self._client.runner(name, pargs, **kwargs)['return'][0]
 
 
 class WheelModule(Module):
     def _rpc(self, name, *pargs, **kwargs):
-        return self._client.wheel(name, pargs, kwargs)
+        return self._client.wheel(name, pargs, kwargs)['return'][0]['data']['return']
 
 
 class MinionQuery(types.SimpleNamespace):
@@ -126,7 +132,7 @@ class Client:
         if name in runner_modules:
             return RunnerModule(_client=salt_client, _name=name, _funcs=runner_modules[name])
         elif name in wheel_modules:
-            return RunnerModule(_client=salt_client, _name=name, _funcs=wheel_modules[name])
+            return WheelModule(_client=salt_client, _name=name, _funcs=wheel_modules[name])
         else:
             raise AttributeError
 
