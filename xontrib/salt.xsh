@@ -1,5 +1,9 @@
 xontrib load schedule
 import types
+try:
+    import ujson as json
+except ImportError:
+    import json
 import pepper
 import pepper.cli
 
@@ -12,6 +16,31 @@ salt_client = None
 exec_modules = None
 runner_modules = None
 wheel_modules = None
+
+CACHE_PATH = p'$XONSH_DATA_DIR/xontrib-salt.json'
+
+
+def _try_load_cache():
+    global exec_modules, runner_modules, wheel_modules
+    if not CACHE_PATH.exists():
+        return
+    with CACHE_PATH.open('r') as cp:
+        try:
+            data = json.load(cp)
+            exec_modules = data['exec']
+            runner_modules = data['runner']
+            wheel_modules = data['wheel']
+        except Exception:
+            return
+
+
+def _save_cache():
+    with CACHE_PATH.open('w') as cp:
+        json.dump({
+            'exec': exec_modules,
+            'runner': runner_modules,
+            'wheel': wheel_modules,
+        }, cp)
 
 
 def login():
@@ -33,7 +62,10 @@ def login():
         schedule.delay(5).do(login)
     else:
         schedule.when(auth['expire']).do(login)
-        _update_modules()
+        if exec_modules is None:
+            _update_modules()
+        else:
+            schedule.delay(0).do(_update_modules)
 
 
 def _parse_docs(info):
@@ -47,12 +79,11 @@ def _parse_docs(info):
 
 def _update_modules():
     global exec_modules, runner_modules, wheel_modules
-    if exec_modules is None:
-        print("Loading salt information...")
     # FIXME: Cache this information in the filesystem
     exec_modules = _parse_docs(salt_client.runner('doc.execution')['return'][0])
     runner_modules = _parse_docs(salt_client.runner('doc.runner')['return'][0])
     wheel_modules = _parse_docs(salt_client.runner('doc.wheel')['return'][0])
+    _save_cache()
 
 
 class Module(types.SimpleNamespace):
@@ -142,5 +173,6 @@ class Client:
         return rv
 
 
+_try_load_cache()
 login()
 salt = Client()
