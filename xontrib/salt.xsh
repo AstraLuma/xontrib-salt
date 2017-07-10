@@ -117,25 +117,24 @@ class Module(types.SimpleNamespace):
         return "{}({})".format(
             type(self).__name__,
             ', '.join("{}={!r}".format(k, v) for k, v in attrs.items())
-            )
-
+        )
 
 
 class ExecModule(Module):
     _target = None
 
-    def _rpc(self, name, *pargs, **kwargs):
-        return self._client.local(self._target, name, pargs, kwargs, expr_form='compound')['return'][0]
+    def _rpc(self, _name, *pargs, **kwargs):
+        return self._client.local(self._target, _name, pargs, kwargs, expr_form='compound')['return'][0]
 
 
 class RunnerModule(Module):
-    def _rpc(self, name, *pargs, **kwargs):
-        return self._client.runner(name, pargs, **kwargs)['return'][0]
+    def _rpc(self, _name, *pargs, **kwargs):
+        return self._client.runner(_name, pargs, **kwargs)['return'][0]
 
 
 class WheelModule(Module):
-    def _rpc(self, name, *pargs, **kwargs):
-        return self._client.wheel(name, pargs, kwargs)['return'][0]['data']['return']
+    def _rpc(self, _name, *pargs, **kwargs):
+        return self._client.wheel(_name, pargs, kwargs)['return'][0]['data']['return']
 
 
 class MinionQuery(types.SimpleNamespace):
