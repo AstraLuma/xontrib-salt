@@ -6,6 +6,7 @@ except ImportError:
     import json
 import pepper
 import pepper.cli
+import logging
 
 __all__ = 'salt',
 __version__ = '0.0.1'
@@ -171,6 +172,15 @@ class Client:
         rv += list(set(runner_modules.keys()) | set(wheel_modules))
         return rv
 
+
+def _silence_logger(logger):
+    logger.propagate = False
+    logger.setLevel(999)
+    # Can't actually enumerate loggers to remove them
+
+
+# libpepper throws exceptions AND logs. Completely unnecessary.
+_silence_logger(logging.getLogger('pepper'))
 
 _try_load_cache()
 login()
