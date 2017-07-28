@@ -9,7 +9,7 @@ setup(
     author_email='astronouth7303@gmail.com',
     description='SaltStack, accessible from xonsh',
     packages=['xontrib'],
-    install_requires=['salt-pepper', 'xontrib-schedule'],
+    install_requires=['salt-pepper', 'xontrib-schedule', 'requests'],
     package_dir={'xontrib': 'xontrib'},
     package_data={'xontrib': ['*.xsh']},
     platforms='any',

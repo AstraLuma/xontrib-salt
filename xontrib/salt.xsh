@@ -172,6 +172,22 @@ class Client:
         rv += list(set(runner_modules.keys()) | set(wheel_modules))
         return rv
 
+    def events(self):
+        import requests
+        import json
+        headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-Auth-Token': salt_client.auth['token']
+        }
+        with requests.get(salt_client._construct_url('/events'), headers=headers, verify=False, stream=True) as resp:
+            for line in resp.iter_lines():
+                line = line.decode('utf-8')
+                if line.startswith('data:'):
+                    line = line[len('data:'):]
+                    data = json.loads(line.strip())
+                    yield data
+
 
 def _silence_logger(logger):
     logger.propagate = False
