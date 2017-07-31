@@ -173,20 +173,48 @@ class Client:
         return rv
 
     def events(self):
+        """
+        Generator tied to the Salt event bus. Produces data roughly in the form of:
+
+            {
+                'data': {
+                    '_stamp': '2017-07-31T20:32:29.691100',
+                    'fun': 'runner.manage.status',
+                    'fun_args': [],
+                    'jid': '20170731163229231910',
+                    'user': 'astro73'
+                },
+                'tag': 'salt/run/20170731163229231910/new'
+            }
+
+        """
         import requests
         import json
+        # This is ripped from pepper, and doesn't support kerb to boot
         headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
             'X-Auth-Token': salt_client.auth['token']
         }
-        with requests.get(salt_client._construct_url('/events'), headers=headers, verify=False, stream=True) as resp:
+        with requests.get(
+            salt_client._construct_url('/events'),
+            headers=headers,
+            verify=False,
+            stream=True
+        ) as resp:
             for line in resp.iter_lines():
+                # Poor-man's Server-Sent Events parser
                 line = line.decode('utf-8')
                 if line.startswith('data:'):
                     line = line[len('data:'):]
                     data = json.loads(line.strip())
                     yield data
+
+    def rehash(self):
+        """
+        Reloads some data. Run this if you've changed the master configuration.
+        """
+        _update_modules()
 
 
 def _silence_logger(logger):
