@@ -294,7 +294,7 @@ class Client:
 def _silence_logger(logger):
     logger.propagate = False
     logger.setLevel(999)
-    # Can't actually enumerate loggers to remove them
+    logger.handlers = []
 
 
 # libpepper throws exceptions AND logs. Completely unnecessary.
