@@ -7,7 +7,7 @@ Overview
 SaltStack, accessible from xonsh
 
 Makes use of Salt's HTTP RPC via Pepper, so make sure you've configured netapi_
-and eauth_ modules. Credentials come from your .pepperrc_ file.
+and eauth_ modules. Credentials come from your pepperrc_ file.
 
 Installation / Usage
 --------------------
@@ -48,6 +48,6 @@ This package was created with cookiecutter_ and the xontrib_ template.
 
 .. _netapi: https://docs.saltstack.com/en/develop/ref/netapi/all/index.html
 .. _eauth: https://docs.saltstack.com/en/latest/topics/eauth/index.html
-.. _.pepperrc: https://github.com/saltstack/pepper/blob/develop/README.rst#configuration
+.. _pepperrc: https://github.com/saltstack/pepper/blob/develop/README.rst#configuration
 .. _cookiecutter: https://github.com/audreyr/cookiecutter
 .. _xontrib: https://github.com/laerus/cookiecutter-xontrib
