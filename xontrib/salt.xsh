@@ -246,6 +246,10 @@ class MinionQuery(types.SimpleNamespace):
         rv += list(exec_modules.keys())
         return rv
 
+    def __iter__(self):
+        # TODO: Is there a way to do this without sending commands to minions?
+        yield from self.test.ping().keys()
+
 
 class Minion(types.SimpleNamespace):
     _target = None
