@@ -24,6 +24,13 @@ wheel_modules = None
 CACHE_PATH = p'$XONSH_DATA_DIR/xontrib-salt.json'
 
 
+events.doc('on_salt_login', """
+on_salt_login() -> None
+
+Fires when we (re)authenticate with the salt master.
+""")
+
+
 def _try_load_cache():
     global exec_modules, runner_modules, wheel_modules
     if not CACHE_PATH.exists():
@@ -146,10 +153,7 @@ def login():
         schedule.delay(5).do(login)
     else:
         schedule.when(auth['expire']).do(login)
-        if exec_modules is None:
-            _update_modules()
-        else:
-            schedule.delay(0).do(_update_modules)
+        events.on_salt_login.fire()
 
 
 def _parse_docs(info):
@@ -161,6 +165,7 @@ def _parse_docs(info):
     return rv
 
 
+@events.on_salt_login
 def _update_modules():
     global exec_modules, runner_modules, wheel_modules
     # FIXME: Cache this information in the filesystem
@@ -349,5 +354,5 @@ def _silence_logger(logger):
 _silence_logger(logging.getLogger('pepper'))
 
 _try_load_cache()
-login()
+schedule.delay(0).do(login)
 salt = Client()
