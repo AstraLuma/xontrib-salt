@@ -37,7 +37,8 @@ Runner commands:
 
 Standard minion commands:
 
-   $ salt['*'].test.ping()
+   $ salt('*').test.ping()
+   $ salt['myminion'].test.ping()
 
 Credits
 ---------

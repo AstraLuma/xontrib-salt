@@ -276,6 +276,9 @@ class Minion(types.SimpleNamespace):
 class Client(collections.abc.Mapping):
     # Minion Queries
     def __call__(self, key):
+        """
+        Perform a compound match of minions.
+        """
         return MinionQuery(_target=key, _client=salt_client)
 
     # Master (Runners & Wheels)
@@ -295,6 +298,9 @@ class Client(collections.abc.Mapping):
     # Individual Minions
     # TODO: Minion list caching? Probably requires listening to events on a background thread.
     def __getitem__(self, name):
+        """
+        Get an individual minion.
+        """
         return Minion(_target=name, _client=salt_client)
 
     def __iter__(self):
