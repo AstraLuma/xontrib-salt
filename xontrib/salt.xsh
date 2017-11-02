@@ -274,6 +274,14 @@ class Minion(types.SimpleNamespace):
 
 
 class Client(collections.abc.Mapping):
+    """
+    salt['minion-id'].spam.eggs() -> Manipulate a single minion
+    salt('G@kernel:linux').spam.eggs() -> Manipulate a whole group of minions (by compound match)
+    salt.spam.eggs() -> Manipulate the master (Runner or Wheel)
+
+    Acts as a mapping of all joined minions.
+    """
+
     # Minion Queries
     def __call__(self, key):
         """
