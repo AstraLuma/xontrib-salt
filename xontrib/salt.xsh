@@ -9,6 +9,7 @@ import pepper.cli
 import logging
 import requests
 import time
+import collections.abc
 
 __all__ = 'salt',
 __version__ = '0.0.1'
@@ -178,7 +179,7 @@ class Module(types.SimpleNamespace):
         try:
             docstring = self._funcs[name]
         except KeyError:
-            raise AttributeError
+            docstring = None
 
         def _call(*pargs, **kwargs):
             return self._rpc(self._name + '.' + name, *pargs, **kwargs)
@@ -210,6 +211,15 @@ class ExecModule(Module):
         return self._client.local(self._target, _name, pargs, kwargs, expr_form='compound')['return'][0]
 
 
+class SingleExecModule(Module):
+    _target = None
+
+    def _rpc(self, _name, *pargs, **kwargs):
+        rv = self._client.local(self._target, _name, pargs, kwargs, expr_form='list')['return'][0]
+        assert len(rv) == 1
+        return rv[self._target]
+
+
 class RunnerModule(Module):
     def _rpc(self, _name, *pargs, **kwargs):
         return self._client.runner(_name, pargs, **kwargs)['return'][0]
@@ -228,7 +238,7 @@ class MinionQuery(types.SimpleNamespace):
         try:
             funcs = exec_modules[name]
         except KeyError:
-            raise AttributeError
+            funcs = {}
         return ExecModule(_target=self._target, _client=self._client, _name=name, _funcs=funcs)
 
     def __dir__(self):
@@ -237,10 +247,29 @@ class MinionQuery(types.SimpleNamespace):
         return rv
 
 
-class Client:
-    def __getitem__(self, key):
+class Minion(types.SimpleNamespace):
+    _target = None
+    _client = None
+
+    def __getattr__(self, name):
+        try:
+            funcs = exec_modules[name]
+        except KeyError:
+            funcs = {}
+        return SingleExecModule(_target=self._target, _client=self._client, _name=name, _funcs=funcs)
+
+    def __dir__(self):
+        rv = super().__dir__()
+        rv += list(exec_modules.keys())
+        return rv
+
+
+class Client(collections.abc.Mapping):
+    # Minion Queries
+    def __call__(self, key):
         return MinionQuery(_target=key, _client=salt_client)
 
+    # Master (Runners & Wheels)
     def __getattr__(self, name):
         if name in runner_modules:
             return RunnerModule(_client=salt_client, _name=name, _funcs=runner_modules[name])
@@ -251,9 +280,24 @@ class Client:
 
     def __dir__(self):
         rv = super().__dir__()
-        rv += list(set(runner_modules.keys()) | set(wheel_modules))
+        rv += list(set(runner_modules.keys()) | set(wheel_modules.keys()))
         return rv
 
+    # Individual Minions
+    # TODO: Minion list caching? Probably requires listening to events on a background thread.
+    def __getitem__(self, name):
+        return Minion(_target=name, _client=salt_client)
+
+    def __iter__(self):
+        yield from self.manage.joined()
+
+    def __len__(self):
+        return len(self.manage.joined())
+
+    def __contains__(self, name):
+        return name in self.manage.joined()
+
+    # Utilities
     def events(self):
         """
         Generator tied to the Salt event bus. Produces data roughly in the form of:
