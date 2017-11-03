@@ -312,12 +312,21 @@ class Client(collections.abc.Mapping):
         return Minion(_target=name, _client=salt_client)
 
     def __iter__(self):
+        """
+        Query for the list of joined minions
+        """
         yield from self.manage.joined()
 
     def __len__(self):
+        """
+        Count the number of joined minions
+        """
         return len(self.manage.joined())
 
     def __contains__(self, name):
+        """
+        Check if this is a known joined minion
+        """
         return name in self.manage.joined()
 
     # Utilities
