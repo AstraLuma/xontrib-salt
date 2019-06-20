@@ -88,6 +88,9 @@ class Module(types.SimpleNamespace):
     _client = None
 
     def __getattr__(self, name):
+        if name == 'xonsh_display' or name.startswith('_'):
+            raise AttributeError
+
         try:
             docstring = self._funcs[name]
         except KeyError:
@@ -147,6 +150,9 @@ class MinionQuery(types.SimpleNamespace):
     _client = None
 
     def __getattr__(self, name):
+        if name == 'xonsh_display' or name.startswith('_'):
+            raise AttributeError
+
         try:
             funcs = exec_modules[name]
         except KeyError:
@@ -168,6 +174,9 @@ class Minion(types.SimpleNamespace):
     _client = None
 
     def __getattr__(self, name):
+        if name == 'xonsh_display' or name.startswith('_'):
+            raise AttributeError
+
         try:
             funcs = exec_modules[name]
         except KeyError:
