@@ -271,12 +271,6 @@ class Client(collections.abc.Mapping):
         _update_modules()
 
 
-def _silence_logger(logger):
-    logger.propagate = False
-    logger.setLevel(999)
-    logger.handlers = []
-
-
 _try_load_cache()
 schedule.delay(0).do(login)
 salt = Client()
