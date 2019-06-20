@@ -1,13 +1,10 @@
-# xontrib load schedule
+xontrib load schedule
 import types
 try:
     import ujson as json
 except ImportError:
     import json
 import cumin
-import logging
-import requests
-import time
 import collections.abc
 
 __all__ = 'salt',
@@ -256,8 +253,7 @@ class Client(collections.abc.Mapping):
             }
 
         """
-        yield from salt_client.events():
-            yield data
+        yield from salt_client.events()
 
     def rehash(self):
         """
