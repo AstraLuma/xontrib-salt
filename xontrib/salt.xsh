@@ -88,7 +88,7 @@ class Module(types.SimpleNamespace):
     _client = None
 
     def __getattr__(self, name):
-        if name == 'xonsh_display' or name.startswith('_'):
+        if name in ('xonsh_display', 'getdoc') or name.startswith('_'):
             raise AttributeError
 
         try:
@@ -150,7 +150,7 @@ class MinionQuery(types.SimpleNamespace):
     _client = None
 
     def __getattr__(self, name):
-        if name == 'xonsh_display' or name.startswith('_'):
+        if name in ('xonsh_display', 'getdoc') or name.startswith('_'):
             raise AttributeError
 
         try:
@@ -174,7 +174,7 @@ class Minion(types.SimpleNamespace):
     _client = None
 
     def __getattr__(self, name):
-        if name == 'xonsh_display' or name.startswith('_'):
+        if name in ('xonsh_display', 'getdoc') or name.startswith('_'):
             raise AttributeError
 
         try:
