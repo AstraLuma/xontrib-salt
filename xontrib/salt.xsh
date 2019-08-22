@@ -137,7 +137,7 @@ class SingleExecModule(Module):
 
 class RunnerModule(Module):
     def _rpc(self, _name, *pargs, **kwargs):
-        return self._client.runner(_name, pargs, **kwargs)
+        return self._client.runner(_name, pargs, kwargs)
 
 
 class WheelModule(Module):
